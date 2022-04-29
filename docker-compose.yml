@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  # grafana:
+  #   build: ./grafana
+  #   restart: unless-stopped
+  #   ports:
+  #     - 3000:3000
+  #   container_name: 'grafana'
+
+  influxdb:
+    image: influxdb:2.2.0
+    restart: unless-stopped
+    ports:
+      - 8086:8086
+    volumes:
+      - ./influxdb-storage:/var/lib/influxdb2
+      - influxdb_empty:/etc/influxdb2
+    # networks:
+    #   - influxdb-telegraf-net
+    container_name: influxdb
+    environment: 
+       # Use these same configurations parameters in your telegraf configuration, mytelegraf.conf.
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=YouShin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=M11007317
+      - DOCKER_INFLUXDB_INIT_ORG=MMLAB
+      - DOCKER_INFLUXDB_INIT_BUCKET=docker_174
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=docker_174_token
+
+  telegraf:
+    image: telegraf:1.22.1
+    container_name:  telegraf
+    links:
+      - influxdb
+    # user: root
+    environment:
+      - DOCKER_INFLUXDB_INIT_ORG=MMLAB
+      - DOCKER_INFLUXDB_INIT_BUCKET=docker_174
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=docker_174_token
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config_dir/telegraf.conf:/etc/telegraf/telegraf.conf
+    # pid: host
+    privileged: true
+    depends_on:
+      - influxdb
+    # networks:
+    #   - influxdb-telegraf-net
+
+# networks:
+#   influxdb-telegraf-net:
+#     driver: bridge
+volumes:
+  influxdb_empty:
+  
